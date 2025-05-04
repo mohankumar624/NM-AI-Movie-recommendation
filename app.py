@@ -33,16 +33,15 @@ def recommend_movie(user_genres, top_n=3):
 # Create genre list for the checkbox
 genre_choices = sorted(set(g for sublist in movies['genres'] for g in sublist))
 
-# Define Gradio interface
-demo = gr.Interface(
-    fn=recommend_movie,
-    inputs=[
-        gr.CheckboxGroup(choices=genre_choices, label="Choose your favorite genres"),
-        gr.Slider(minimum=1, maximum=5, step=1, value=3, label="Number of Recommendations")
-    ],
-    outputs="markdown",
-    title="🎬 CineMatch: AI Movie Matchmaker",
-    description="Get smart movie recommendations based on your favorite genres!"
-)
+# Define Gradio Blocks interface
+with gr.Blocks() as demo:
+    with gr.Row():
+        genre_input = gr.CheckboxGroup(choices=genre_choices, label="Choose your favorite genres")
+        num_recommendations = gr.Slider(minimum=1, maximum=5, step=1, value=3, label="Number of Recommendations")
+    
+    output = gr.Markdown()
+    
+    genre_input.change(recommend_movie, inputs=[genre_input, num_recommendations], outputs=output)
+    num_recommendations.change(recommend_movie, inputs=[genre_input, num_recommendations], outputs=output)
 
 demo.launch()
