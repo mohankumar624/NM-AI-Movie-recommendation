@@ -1,49 +1,74 @@
-import streamlit as st
+# Install needed packages first:
+
+# pip install pandas scikit-learn surprise
+
 import pandas as pd
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.preprocessing import MultiLabelBinarizer
+from surprise import Dataset, Reader, SVD
+from surprise.model\_selection import train\_test\_split
+from sklearn.feature\_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import linear\_kernel
 
-# Set up Streamlit config
-st.set_page_config(page_title="AI Movie Recommender", layout="centered")
+# Load datasets
 
-# Load data from a working GitHub link
-@st.cache_data
-def load_data():
-    url = "https://raw.githubusercontent.com/gopala-kr/Movielens-Dataset-Exploration/master/movies.csv"
-    df = pd.read_csv(url)
-    df = df.dropna(subset=['genres'])  # Drop rows with no genre
-    df['genres'] = df['genres'].apply(lambda x: x.split('|'))  # Split genres into lists
-    df = df[df['genres'].map(len) > 0]  # Remove rows with empty genre lists
-    df['rating'] = np.random.uniform(6.0, 9.5, len(df))  # Fake ratings for now
-    return df
+movies = pd.read\_csv('movies.csv')   # movieId, title, genres
+ratings = pd.read\_csv('ratings.csv') # userId, movieId, rating
 
-movies = load_data()
+# Collaborative filtering with Surprise
 
-# Extract all genres
-all_genres = sorted(set(genre for sublist in movies['genres'] for genre in sublist))
+reader = Reader(rating\_scale=(0.5, 5.0))
+data = Dataset.load\_from\_df(ratings\[\['userId', 'movieId', 'rating']], reader)
+trainset, testset = train\_test\_split(data, test\_size=0.2)
 
-# Recommendation engine
-def recommend_movie(user_genres, top_n):
-    mlb = MultiLabelBinarizer()
-    genre_matrix = mlb.fit_transform(movies['genres'])
-    user_vector = mlb.transform([user_genres])
-    scores = cosine_similarity(user_vector, genre_matrix)[0]
-    top_indices = np.argsort(scores)[::-1][:top_n]
-    recommended = movies.iloc[top_indices][['title', 'genres', 'rating']].copy()
-    recommended['genres'] = recommended['genres'].apply(lambda g: ', '.join(g))
-    return recommended
+model = SVD()
+model.fit(trainset)
 
-# UI
-st.title("🎬 AI-Powered Movie Recommender")
-st.markdown("Select your favorite genres to get personalized movie recommendations from the MovieLens dataset.")
+# Get top N recommendations for a user
 
-selected_genres = st.multiselect("Choose your favorite genres:", all_genres)
-top_n = st.slider("Number of recommendations:", min_value=1, max_value=10, value=5)
+def get\_collab\_recommendations(user\_id, n=5):
+movie\_ids = ratings\['movieId'].unique()
+predictions = \[model.predict(user\_id, movie\_id) for movie\_id in movie\_ids]
+predictions.sort(key=lambda x: x.est, reverse=True)
+top\_movies = \[p.iid for p in predictions\[:n]]
+return movies\[movies\['movieId'].isin(top\_movies)]\[\['title', 'genres']]
 
-if selected_genres:
-    result_df = recommend_movie(selected_genres, top_n)
-    st.subheader("🎥 Recommended Movies:")
-    st.table(result_df)
-else:
-    st.info("👈 Please select at least one genre.")
+# Content-based filtering (TF-IDF on genres)
+
+tfidf = TfidfVectorizer(stop\_words='english')
+movies\['genres'] = movies\['genres'].fillna('')
+tfidf\_matrix = tfidf.fit\_transform(movies\['genres'])
+cosine\_sim = linear\_kernel(tfidf\_matrix, tfidf\_matrix)
+
+indices = pd.Series(movies.index, index=movies\['title']).drop\_duplicates()
+
+def get\_content\_recommendations(title, n=5):
+idx = indices\[title]
+sim\_scores = list(enumerate(cosine\_sim\[idx]))
+sim\_scores = sorted(sim\_scores, key=lambda x: x\[1], reverse=True)
+sim\_scores = sim\_scores\[1\:n+1]
+movie\_indices = \[i\[0] for i in sim\_scores]
+return movies.iloc\[movie\_indices]\[\['title', 'genres']]
+
+# Example usage
+
+print("Collaborative recommendations for user 1:")
+print(get\_collab\_recommendations(user\_id=1))
+
+print("\nContent-based recommendations similar to 'Toy Story':")
+print(get\_content\_recommendations(title='Toy Story'))
+
+ModuleNotFoundError                       Traceback (most recent call last) <ipython-input-3-b82aa3f8b80a> in \<cell line: 0>()
+3
+4 import pandas as pd
+\----> 5 from surprise import Dataset, Reader, SVD
+6 from surprise.model\_selection import train\_test\_split
+7 from sklearn.feature\_extraction.text import TfidfVectorizer
+
+ModuleNotFoundError: No module named 'surprise'
+
+---
+
+NOTE: If your import is failing due to a missing package, you can
+manually install dependencies using either !pip or !apt.
+
+To view examples of installing some common dependencies, click the
+"Open Examples" button below.
