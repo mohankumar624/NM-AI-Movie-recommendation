@@ -12,9 +12,9 @@ st.set_page_config(page_title="AI Movie Recommender", layout="centered")
 def load_data():
     url = "https://raw.githubusercontent.com/gopala-kr/Movielens-Dataset-Exploration/master/movies.csv"
     df = pd.read_csv(url)
-    df = df.dropna(subset=['genres'])
-    df['genres'] = df['genres'].apply(lambda x: x.split('|'))
-    df = df[df['genres'].map(len) > 0]
+    df = df.dropna(subset=['genres'])  # Drop rows with no genre
+    df['genres'] = df['genres'].apply(lambda x: x.split('|'))  # Split genres into lists
+    df = df[df['genres'].map(len) > 0]  # Remove rows with empty genre lists
     df['rating'] = np.random.uniform(6.0, 9.5, len(df))  # Fake ratings for now
     return df
 
