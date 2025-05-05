@@ -70,7 +70,7 @@ def main():
 
     # User Inputs
     selected_genres = st.multiselect("Choose your favorite genres:", genre_choices)
-    top_n = st.slider("Number of movie recommendations:", 1, 10, 20)
+    top_n = st.slider("Number of movie recommendations:", 1, 10, 5)
 
     # Recommend
     if selected_genres:
