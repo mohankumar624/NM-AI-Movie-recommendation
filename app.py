@@ -1,49 +1,60 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine\_similarity
 from sklearn.preprocessing import MultiLabelBinarizer
 
-# Set up Streamlit config
-st.set_page_config(page_title="AI Movie Recommender", layout="centered")
+# Must be at the top — avoids page config errors
 
-# Load data from a working GitHub link
-@st.cache_data
-def load_data():
-    url = "https://raw.githubusercontent.com/gopala-kr/Movielens-Dataset-Exploration/master/movies.csv"
-    df = pd.read_csv(url)
-    df = df.dropna(subset=['genres'])  # Drop rows with no genre
-    df['genres'] = df['genres'].apply(lambda x: x.split('|'))  # Split genres into lists
-    df = df[df['genres'].map(len) > 0]  # Remove rows with empty genre lists
-    df['rating'] = np.random.uniform(6.0, 9.5, len(df))  # Fake ratings for now
-    return df
+st.set\_page\_config(page\_title="AI Movie Recommender", layout="centered")
 
-movies = load_data()
+# Sample Movie Data
 
-# Extract all genres
-all_genres = sorted(set(genre for sublist in movies['genres'] for genre in sublist))
+movies = pd.DataFrame({
+'title': \['Inception', 'Titanic', 'The Matrix', 'The Godfather', 'Avengers'],
+'genres': \[\['Action', 'Sci-Fi'], \['Romance', 'Drama'], \['Sci-Fi', 'Action'], \['Crime', 'Drama'], \['Action', 'Fantasy']],
+'rating': \[8.8, 7.8, 8.7, 9.2, 8.4]
+})
 
-# Recommendation engine
-def recommend_movie(user_genres, top_n):
-    mlb = MultiLabelBinarizer()
-    genre_matrix = mlb.fit_transform(movies['genres'])
-    user_vector = mlb.transform([user_genres])
-    scores = cosine_similarity(user_vector, genre_matrix)[0]
-    top_indices = np.argsort(scores)[::-1][:top_n]
-    recommended = movies.iloc[top_indices][['title', 'genres', 'rating']].copy()
-    recommended['genres'] = recommended['genres'].apply(lambda g: ', '.join(g))
-    return recommended
+# Genre list for UI
 
-# UI
+genre\_choices = sorted(set(genre for sublist in movies\['genres'] for genre in sublist))
+
+def recommend\_movie(user\_genres, top\_n):
+\# Transform genres using MultiLabelBinarizer
+mlb = MultiLabelBinarizer()
+genre\_matrix = mlb.fit\_transform(movies\['genres'])
+
+```
+# Convert user input to vector
+user_vector = mlb.transform([user_genres])
+
+# Compute cosine similarity
+scores = cosine_similarity(user_vector, genre_matrix)[0]
+
+# Get top N indices
+top_indices = np.argsort(scores)[::-1][:top_n]
+
+# Prepare output
+recommended = movies.iloc[top_indices][['title', 'genres', 'rating']].copy()
+recommended['genres'] = recommended['genres'].apply(lambda g: ', '.join(g))
+return recommended
+```
+
+# UI Layout
+
 st.title("🎬 AI-Powered Movie Recommender")
-st.markdown("Select your favorite genres to get personalized movie recommendations from the MovieLens dataset.")
+st.markdown("Select your favorite genres and get personalized movie suggestions.")
 
-selected_genres = st.multiselect("Choose your favorite genres:", all_genres)
-top_n = st.slider("Number of recommendations:", min_value=1, max_value=10, value=5)
+selected\_genres = st.multiselect("Choose your favorite genres:", genre\_choices)
+top\_n = st.slider("Number of movie recommendations:", min\_value=1, max\_value=5, value=3)
 
-if selected_genres:
-    result_df = recommend_movie(selected_genres, top_n)
-    st.subheader("🎥 Recommended Movies:")
-    st.table(result_df)
+# Trigger recommendation
+
+if selected\_genres:
+result\_df = recommend\_movie(selected\_genres, top\_n)
+st.subheader("🎥 Recommended Movies:")
+st.table(result\_df)
 else:
-    st.info("👈 Please select at least one genre.")
+st.info("👈 Please select at least one genre to see recommendations.")
+
