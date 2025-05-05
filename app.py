@@ -56,19 +56,4 @@ print(get\_collab\_recommendations(user\_id=1))
 print("\nContent-based recommendations similar to 'Toy Story':")
 print(get\_content\_recommendations(title='Toy Story'))
 
-ModuleNotFoundError                       Traceback (most recent call last) <ipython-input-3-b82aa3f8b80a> in \<cell line: 0>()
-3
-4 import pandas as pd
-\----> 5 from surprise import Dataset, Reader, SVD
-6 from surprise.model\_selection import train\_test\_split
-7 from sklearn.feature\_extraction.text import TfidfVectorizer
 
-ModuleNotFoundError: No module named 'surprise'
-
----
-
-NOTE: If your import is failing due to a missing package, you can
-manually install dependencies using either !pip or !apt.
-
-To view examples of installing some common dependencies, click the
-"Open Examples" button below.
