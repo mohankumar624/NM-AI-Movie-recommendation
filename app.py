@@ -15,20 +15,31 @@ movies = pd.DataFrame({
 mlb = MultiLabelBinarizer()
 genre_matrix = mlb.fit_transform(movies['genres'])
 
-# Genre list for selection
+# Genre list
 genre_choices = sorted(set(g for sublist in movies['genres'] for g in sublist))
 
-# App title
-st.title("🎬 Movie Recommender System")
+# Streamlit UI
+def main():
+    st.set_page_config(page_title="AI Movie Recommender", layout="centered")
+    st.title("🎬 AI-Powered Movie Recommender")
+    st.markdown("Select your favorite genres and get personalized movie suggestions.")
 
-# User inputs
-selected_genres = st.multiselect("Choose your favorite genres", genre_choices)
-top_n = st.slider("Number of Recommendations", min_value=1, max_value=5, value=3)
+    # User Inputs
+    selected_genres = st.multiselect("Choose your favorite genres:", genre_choices)
+    top_n = st.slider("How many recommendations would you like?", min_value=1, max_value=5, value=3)
+
+    # Recommendation logic
+    if selected_genres:
+        recommendations = recommend_movie(selected_genres, top_n)
+        st.subheader("🎥 Recommended Movies:")
+        st.table(recommendations)
+    else:
+        st.info("👈 Please select at least one genre to get recommendations.")
 
 # Recommend function
 def recommend_movie(user_genres, top_n=3):
     if not user_genres:
-        return None
+        return pd.DataFrame()
     
     user_vector = mlb.transform([user_genres])
     scores = cosine_similarity(user_vector, genre_matrix)[0]
@@ -38,10 +49,5 @@ def recommend_movie(user_genres, top_n=3):
     recommended['genres'] = recommended['genres'].apply(lambda g: ', '.join(g))
     return recommended
 
-# Display recommendations
-if selected_genres:
-    recommendations = recommend_movie(selected_genres, top_n)
-    st.subheader("Recommended Movies:")
-    st.table(recommendations)
-else:
-    st.info("👈 Please select at least one genre to get recommendations.")
+if __name__ == "__main__":
+    main()
