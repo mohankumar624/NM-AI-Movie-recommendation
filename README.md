@@ -3,7 +3,7 @@
 An intelligent movie recommender system built using **collaborative filtering**, **content-based filtering**, and an interactive UI with **Streamlit**.
 
 # Live Demo App
-[Click Here](https://nm-ai-movie-recommendation.streamlit.app/)
+Click Here:https://nm-ai-movie-recommendation.streamlit.app/
 
 ---
 
